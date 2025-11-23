@@ -1,0 +1,129 @@
+#! python3
+
+import json
+import os
+import datetime
+
+
+FILE_NAME = "tasks.json"
+
+
+def load_task():
+    if os.path.exists(FILE_NAME):
+        with open(FILE_NAME, "r") as f:
+            return json.load(f)
+    return {}
+
+
+def save_task(tasks):
+    with open("tasks.json", "w") as write_file:
+        json.dump(tasks, write_file, indent = 4)
+
+
+def add(task):
+    tasks_json = load_task()
+    ID = str(len(tasks_json) + 1)
+    started = datetime.datetime.now()
+    if task is None:
+        return
+    
+    tasks_json[ID] = {
+        "Description": task, 
+        "Status": "todo",
+        "Created": str(started.strftime("%x, %X"))
+    }
+    save_task(tasks_json)
+    print(f'Task added successfully (ID: {ID})')
+ 
+
+def update(ID, new_name):
+    ID = str(ID)
+    tasks_json = load_task()
+    updated = datetime.datetime.now()
+
+    if ID in tasks_json:
+        tasks_json[ID]["Description"] = new_name
+        tasks_json[ID]["update"] = updated.strftime("%x, %X")
+
+    save_task(tasks_json)
+
+
+def delete(ID):
+    ID = str(ID)
+    tasks_json = load_task()
+
+    if ID in tasks_json:
+        tasks_json.pop(ID)
+
+    save_task(tasks_json)
+
+
+def mark(ID, status):
+    ID = str(ID)
+    tasks_json = load_task()
+
+    if ID in tasks_json:
+        tasks_json[ID]["Status"] = status
+
+    save_task(tasks_json)
+
+
+def list_tasks(status = None):
+    tasks_json = load_task()
+
+    if status is None:
+        print(tasks_json)
+        return
+    
+    result = [
+        v for v in tasks_json.values()
+        if v["Status"] == status
+    ]
+        
+    print(result)
+
+
+if __name__ == '__main__':
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        description="A personal task Manager!"
+    )
+
+    # Första argumentet: kommandot (add, update, delete, mark, list)
+    parser.add_argument(
+        "command",
+        help="The command to run (add, update, delete, mark, list)"
+    )
+
+    parser.add_argument(
+        "arg1", 
+        nargs="?",
+        help="first argument (task text in (add) or task ID for the rest)"
+    )
+
+    parser.add_argument(
+        "arg2", 
+        nargs="?",
+        help="second argument (new text (update) or status (mark))"
+    )
+
+    args = parser.parse_args()
+
+    if args.command == "add":
+        add(args.arg1)
+
+    elif args.command == "update":
+        update(args.arg1, args.arg2)
+
+    elif args.command == "delete":
+        delete(args.arg1)
+
+    elif args.command == "mark":
+        mark(args.arg1, args.arg2)
+
+    elif args.command == "list":
+        list_tasks(args.arg1)
+
+    else:
+        print("Unknown command.")
